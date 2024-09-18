@@ -11,32 +11,31 @@ router = APIRouter()
 user_controller = UserController()
 
 
-@router.post("/add-user")
+@router.post("/user")
 async def create_user(request: Request, user: CreateUser):
     return await user_controller.create_user(request, user)
 
 @router.post("/login")
 async def login_user(request: Request, user: UserLogin):
-    print(f'Login user in router')
     return await user_controller.login_user(request, user)
 
 
-@router.get("/get-user/{id}")
+@router.get("/user/{id}")
 async def get_user_by_id(request: Request, id: str):
     return await user_controller.get_user_by_id(request, id)
 
 
-@router.get("/get-users")
+@router.get("/users")
 async def get_users(request: Request):
     return await user_controller.get_users(request)
 
 
-@router.put("/update-user/{id}")
+@router.put("/user/{id}")
 async def update_user(request: Request, id: str, user: UpdateUser):
     return await user_controller.update_user(request, id, user)
 
 
-@router.patch("/update-password/")
+@router.patch("/password/")
 async def update_password(request: Request, user: UpdatePassword):
     return await user_controller.update_password(request, user)
 

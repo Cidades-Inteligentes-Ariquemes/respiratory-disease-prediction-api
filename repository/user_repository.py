@@ -1,6 +1,9 @@
 from typing import List, Dict
 import psycopg2
 from infra.database import get_database
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class UserRepository:
@@ -9,7 +12,6 @@ class UserRepository:
         self.db_connection = get_database()
     
     async def create_user(self, user: Dict):
-        print(f'Creating user in repository: {user}')
         try:
             with psycopg2.connect(self.db_connection) as connection:
                 with connection.cursor() as cursor:
@@ -35,7 +37,7 @@ class UserRepository:
                         "added": True
                     }
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error creating user: {e}')
             return {
                 "id": '',
                 "added": False
@@ -63,7 +65,7 @@ class UserRepository:
                     return None
             
             except Exception as e:
-                print(f'Error: {e}')
+                logger.error(f'Error getting user by email: {e}')
                 return None
     
 
@@ -88,7 +90,7 @@ class UserRepository:
                 return None
         
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error getting user by id: {e}')
             return None
         
     
@@ -114,12 +116,11 @@ class UserRepository:
                 return []
         
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error getting users: {e}')
             return []
     
 
     async def update_user(self, id: str, user: Dict):
-        print(f'Updating user in repository: {user}')
         try:
             with psycopg2.connect(self.db_connection) as connection:
                 with connection.cursor() as cursor:
@@ -143,7 +144,7 @@ class UserRepository:
                         "updated": True
                     }
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error updating user: {e}')
             return {
                 "id": '',
                 "updated": False
@@ -151,7 +152,6 @@ class UserRepository:
     
 
     async def update_password_user(self, id: str, password: str):
-        print(f'Updating password in repository')
         try:
             with psycopg2.connect(self.db_connection) as connection:
                 with connection.cursor() as cursor:
@@ -172,14 +172,13 @@ class UserRepository:
                         "updated": True
                     }
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error updating password: {e}')
             return {
                 "id": '',
                 "updated": False
             }
     
     async def delete_user(self, id: str):
-        print(f'Deleting user in repository')
         try:
             with psycopg2.connect(self.db_connection) as connection:
                 with connection.cursor() as cursor:
@@ -195,7 +194,7 @@ class UserRepository:
                         "deleted": True
                     }
         except Exception as e:
-            print(f'Error: {e}')
+            logger.error(f'Error deleting user: {e}')
             return {
                 "id": '',
                 "deleted": False
