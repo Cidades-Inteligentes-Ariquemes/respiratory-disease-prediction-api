@@ -1,1 +1,4 @@
-.venv
+.env
+rx-api
+.vscode
+
