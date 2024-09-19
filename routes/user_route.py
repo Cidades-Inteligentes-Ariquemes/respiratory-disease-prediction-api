@@ -4,6 +4,8 @@ from interfaces.create_user import CreateUser
 from interfaces.user_login import UserLogin
 from interfaces.update_user import UpdateUser
 from interfaces.update_password_user import UpdatePassword
+from interfaces.create_feedback_user import CreateFeedbackUser
+from interfaces.update_password_user_common import UpdatePasswordUserCommon
 
 
 router = APIRouter()
@@ -40,6 +42,21 @@ async def update_password(request: Request, user: UpdatePassword):
     return await user_controller.update_password(request, user)
 
 
+@router.patch("/password/user/common/{id}")
+async def update_password_user_common(request: Request, id: str, user: UpdatePasswordUserCommon):
+    return await user_controller.update_password_user_common(request, id, user) 
+
+
 @router.delete("/user/{id}")
 async def delete_user(request: Request, id: str):
     return await user_controller.delete_user(request, id)
+
+
+@router.post("/feedback")
+async def create_feedback(request: Request, feedback: CreateFeedbackUser):
+    return await user_controller.create_feedback(request, feedback)
+
+
+@router.get("/feedbacks")
+async def get_feedback(request: Request):
+    return await user_controller.get_feedback(request)

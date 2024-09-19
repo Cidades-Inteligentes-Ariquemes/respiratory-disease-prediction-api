@@ -4,6 +4,8 @@ from interfaces.user_login import UserLogin
 from services.user_service import UserService
 from interfaces.update_user import UpdateUser
 from interfaces.update_password_user import UpdatePassword
+from interfaces.create_feedback_user import CreateFeedbackUser
+from interfaces.update_password_user_common import UpdatePasswordUserCommon  
 from utils import credentials_middleware
 
 
@@ -36,6 +38,18 @@ class UserController:
         await self.credentials_middleware.verify_credentials(request)
         return await self.user_service.update_password(user)
     
+    async def update_password_user_common(self, request: Request, id: str, user: UpdatePasswordUserCommon):
+        await self.credentials_middleware.verify_credentials(request)
+        return await self.user_service.update_password_user_common(id, user)
+    
     async def delete_user(self, request: Request, id: str):
         await self.credentials_middleware.verify_credentials(request)
         return await self.user_service.delete_user(id)
+    
+    async def create_feedback(self, request: Request, feedback: CreateFeedbackUser):
+        await self.credentials_middleware.verify_credentials(request)
+        return await self.user_service.create_feedback(feedback)
+    
+    async def get_feedback(self, request: Request):
+        await self.credentials_middleware.verify_credentials(request)
+        return await self.user_service.get_feedback()

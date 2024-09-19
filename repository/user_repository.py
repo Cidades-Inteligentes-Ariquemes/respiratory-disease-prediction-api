@@ -199,5 +199,59 @@ class UserRepository:
                 "id": '',
                 "deleted": False
             }
+    
+
+    async def create_feedback(self, feedback: Dict):
+        try:
+            with psycopg2.connect(self.db_connection) as connection:
+                with connection.cursor() as cursor:
+                    sql = """
+                    INSERT INTO feedbacks (id, user_name, feedback, created_at)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id
+                    """
+                    values = (
+                        feedback['id'],
+                        feedback['user_name'],
+                        feedback['feedback'],
+                        feedback['created_at']
+                    )
+                    cursor.execute(sql, values)
+                    return_id = cursor.fetchone()[0]
+                    connection.commit()
+                    
+                    return {
+                        "id": return_id,
+                        "added": True
+                    }
+        except Exception as e:
+            logger.error(f'Error creating feedback: {e}')
+            return {
+                "id": '',
+                "added": False
+            }
+    
+
+    async def get_feedback(self) -> List[Dict]:
+        try:
+            connection = psycopg2.connect(self.db_connection)
+            cursor = connection.cursor()
+            cursor.execute("SELECT * FROM feedbacks")
+            feedbacks = cursor.fetchall()
+            cursor.close()
+            connection.close()
+
+            if feedbacks:
+                return [
+                    {
+                        "feedback": feedback[2],
+                    } for feedback in feedbacks
+                ]
+            else:
+                return []
+        
+        except Exception as e:
+            logger.error(f'Error getting feedbacks: {e}')
+            return []
 
     

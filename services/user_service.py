@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from datetime import datetime
 from interfaces.create_user import CreateUser
 from repository.user_repository import UserRepository
 from utils.is_email_valid import is_email_valid
@@ -245,6 +246,51 @@ class UserService:
             raise http_exc
     
 
+    async def update_password_user_common(self, id: str, user):
+        try:
+            user = user.dict()
+            for key, value in user.items():
+                if not value:
+                    logger.error(f'Error updating password: {key} cannot be empty')
+                    raise HTTPException(status_code=400,
+                                        detail={"message": f"Error updating password: {key} cannot be empty",
+                                                "status_code": 400})
+            
+            user_exists = await self.user_repository.get_user_by_id(id)
+            if user_exists:
+                logger.info(f"User exists: {user_exists['id']}")
+                
+                # comparar a senha atual com a senha que o usuário informou
+                if not await self.password_adapter.verify_password(user['CurrentPassword'], user_exists['password']):
+                    logger.error(f'Error updating password: old password is incorrect')
+                    raise HTTPException(status_code=401, detail={"message": "Error updating password: current password is incorrect",
+                                                                 "status_code": 401})
+
+                user['NewPassword'] = await self.password_adapter.hash_password(user['NewPassword'])
+
+                user_updated = await self.user_repository.update_password_user(id, user['NewPassword'])
+
+                if user_updated['updated']:
+                    logger.info(f"Password updated user with id: {user_exists['id']} successfully")
+                    return {
+                        "detail": {
+                            "message": "Password updated successfully",
+                            "user_id": user_exists['id'],
+                            "status_code": 200
+                        }
+                    }
+                else:
+                    logger.error(f'Error updating password')
+                    raise HTTPException(status_code=500, detail={"message": "Error updating password",
+                                                                 "status_code": 500})
+            else:
+                logger.error(f'Error updating password: user not found')
+                raise HTTPException(status_code=404, detail={"message": "Error updating password: user not found",
+                                                             "status_code": 404})
+        except HTTPException as http_exc:
+            raise http_exc
+    
+
     async def delete_user(self, id: str):
         try:
             user_exists = await self.user_repository.get_user_by_id(id)
@@ -267,6 +313,74 @@ class UserService:
             else:
                 logger.error(f'Error deleting user: user not found')
                 raise HTTPException(status_code=404, detail={"message": "Error deleting user: user not found",
+                                                             "status_code": 404})
+        except HTTPException as http_exc:
+            raise http_exc
+    
+
+    async def create_feedback(self, feedback):
+        try:
+            feedback = feedback.dict()
+            for key, value in feedback.items():
+                if not value:
+                    logger.error(f'Error adding feedback: {key} cannot be empty')
+                    raise HTTPException(status_code=400, detail={"message": f'Error adding feedback: {key} cannot be empty',
+                                                                 "status_code": 400})
+            
+            feedback_with_id = {
+                "id": str(uuid.uuid4()),
+                **feedback,
+                'created_at': str(datetime.now())
+            }
+            
+            feedback_added = await self.user_repository.create_feedback(feedback_with_id)
+            if feedback_added['added']:
+                logger.info(f'Feedback added successfully')
+                return {
+                    "detail": {
+                        "message": "Feedback added successfully",
+                        "feedback_id": feedback_added['id'],
+                        "status_code": 201
+                    }
+                }
+            else:
+                logger.error(f'Error adding feedback')
+                raise HTTPException(status_code=500, detail={"message": "Error adding feedback",
+                                                             "status_code": 500})
+        except HTTPException as http_exc:
+            raise http_exc
+    
+
+    async def get_feedback(self):
+        try:
+            feedbacks = await self.user_repository.get_feedback()
+            if feedbacks and len(feedbacks) > 0:
+
+                contagem_feedback = {}
+
+                for item in feedbacks:
+                    feedback = item['feedback']
+                    if feedback in contagem_feedback:
+                        contagem_feedback[feedback] += 1
+                    else:
+                        contagem_feedback[feedback] = 1
+
+                logger.info(f'Feedbacks found successfully')
+
+                return {
+                    "detail": {
+                        "message": "Feedbacks found",
+                        "feedbacks": contagem_feedback,
+                        "status_code": 200
+                    }
+                }
+            elif len(feedbacks) == 0:
+                logger.error(f'Error getting feedbacks: feedbacks not found')
+                raise HTTPException(status_code=200, detail={"message": "There are no saved feedbacks",
+                                                             "status_code": 200})
+            else:
+                logger.error(f'Error getting feedbacks: feedbacks not found')
+                raise HTTPException(status_code=404, detail={"message": "Error getting feedbacks: feedbacks not found",
                                                              "status_code": 404})
         except HTTPException as http_exc:
             raise http_exc
