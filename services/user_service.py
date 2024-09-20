@@ -354,16 +354,25 @@ class UserService:
     async def get_feedback(self):
         try:
             feedbacks = await self.user_repository.get_feedback()
+            print(f'feedbacks: {feedbacks}')
             if feedbacks and len(feedbacks) > 0:
 
                 contagem_feedback = {}
 
-                for item in feedbacks:
-                    feedback = item['feedback']
-                    if feedback in contagem_feedback:
-                        contagem_feedback[feedback] += 1
-                    else:
-                        contagem_feedback[feedback] = 1
+                for record in feedbacks:
+                    disease = record['prediction_made']
+                    feedback = record['feedback']
+
+                    if disease not in contagem_feedback:
+                        contagem_feedback[disease] = {
+                            "total_quantity": 0,
+                            "total_quantity_correct": 0
+                        }
+                    
+                    contagem_feedback[disease]['total_quantity'] += 1
+
+                    if feedback == 'sim':
+                        contagem_feedback[disease]['total_quantity_correct'] += 1
 
                 logger.info(f'Feedbacks found successfully')
 

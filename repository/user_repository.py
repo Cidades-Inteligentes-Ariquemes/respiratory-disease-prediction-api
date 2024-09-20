@@ -206,14 +206,16 @@ class UserRepository:
             with psycopg2.connect(self.db_connection) as connection:
                 with connection.cursor() as cursor:
                     sql = """
-                    INSERT INTO feedbacks (id, user_name, feedback, created_at)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO feedbacks (id, user_name, feedback, prediction_made, correct_prediction, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                     RETURNING id
                     """
                     values = (
                         feedback['id'],
                         feedback['user_name'],
                         feedback['feedback'],
+                        feedback['prediction_made'],
+                        feedback['correct_prediction'],
                         feedback['created_at']
                     )
                     cursor.execute(sql, values)
@@ -245,6 +247,8 @@ class UserRepository:
                 return [
                     {
                         "feedback": feedback[2],
+                        "prediction_made": feedback[3],
+                        "correct_prediction": feedback[4],
                     } for feedback in feedbacks
                 ]
             else:
