@@ -326,7 +326,11 @@ class UserService:
                     logger.error(f'Error adding feedback: {key} cannot be empty')
                     raise HTTPException(status_code=400, detail={"message": f'Error adding feedback: {key} cannot be empty',
                                                                  "status_code": 400})
-            
+                
+            feedback['prediction_made'] = feedback['prediction_made'].lower()
+            feedback['feedback'] = feedback['feedback'].lower()
+            feedback['correct_prediction'] = feedback['correct_prediction'].lower()
+
             feedback_with_id = {
                 "id": str(uuid.uuid4()),
                 **feedback,
