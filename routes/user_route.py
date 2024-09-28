@@ -6,6 +6,9 @@ from interfaces.update_user import UpdateUser
 from interfaces.update_password_user import UpdatePassword
 from interfaces.create_feedback_user import CreateFeedbackUser
 from interfaces.update_password_user_common import UpdatePasswordUserCommon
+from interfaces.forgot_update_password_model import ForgotUpadatePassword
+from interfaces.code_verification_model import CodeVerification
+from interfaces.id_verification_model import IdVerification
 
 
 router = APIRouter()
@@ -44,7 +47,27 @@ async def update_password(request: Request, user: UpdatePassword):
 
 @router.patch("/password/user/common/{id}")
 async def update_password_user_common(request: Request, id: str, user: UpdatePasswordUserCommon):
-    return await user_controller.update_password_user_common(request, id, user) 
+    return await user_controller.update_password_user_common(request, id, user)
+
+
+@router.post("/send-verification-code/{email}")
+async def forgot_password(request: Request, email: str):
+    return await user_controller.send_verification_code(request, email)
+
+
+@router.post("/resend-verification-code/{email}")
+async def resend_verification_code(request: Request, email: str, id_verification: IdVerification):
+    return await user_controller.resend_verification_code(request, email, id_verification)
+
+
+@router.post("/confirm-code-verification/{email}")
+async def code_verification(request: Request, email: str, code: CodeVerification):
+    return await user_controller.confirm_code_verification(request, email, code)
+
+
+@router.patch("/forgot/update-password/{user_id}")
+async def forgot_update_password(request: Request, user_id: str, new_password: ForgotUpadatePassword):
+    return await user_controller.forgot_update_password(request, user_id, new_password) 
 
 
 @router.delete("/user/{id}")

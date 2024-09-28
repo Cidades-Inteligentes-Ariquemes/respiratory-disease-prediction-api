@@ -1,3 +1,4 @@
 .env
 rx-api
 .vscode
+__pycache__

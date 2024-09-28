@@ -12,7 +12,14 @@ class CredentialsMiddleware:
         list_routes = list_routes_user_common.list_routes_user_common()
         api_key = request.headers.get('api_key')
         token_value = request.headers.get('Authorization')
-        if request.url.path == '/login':
+        allowed_paths = [
+            '/login',
+            '/send-verification-code/',
+            '/confirm-code-verification/',
+            '/forgot/update-password/',
+            '/resend-verification-code/'
+        ]
+        if any([request.url.path.startswith(path) for path in allowed_paths]):
             CredentialsMiddleware.verify_api_key(api_key)
         elif request.url.path in list_routes:
             CredentialsMiddleware.verify_api_key(api_key)
