@@ -39,8 +39,8 @@ class UserService:
             
             if not is_email_valid(user['email']):
                 logger.error(f'Error adding user: email is not valid')
-                raise HTTPException(status_code=422, detail={"message": f'Error adding user: email is not valid',
-                                                             "status_code": 422})
+                raise HTTPException(status_code=403, detail={"message": f'Error adding user: email is not valid',
+                                                             "status_code": 403})
             
 
             user_exists = await self.user_repository.get_user_by_email(user['email'])
@@ -48,8 +48,8 @@ class UserService:
 
             if user_exists:
                 logger.error(f'Error adding user: email already exists')
-                raise HTTPException(status_code=422, detail={"message": f'Error adding user: email already exists',
-                                                             "status_code": 422})
+                raise HTTPException(status_code=409, detail={"message": f'Error adding user: email already exists',
+                                                             "status_code": 409})
             
             user['password'] = await self.password_adapter.hash_password(user['password'])
 
@@ -89,8 +89,8 @@ class UserService:
                     token = await self.token_adapter.create_token(user_exists['id'], user_exists['full_name'], user_exists['email'], user_exists['profile'])
                     if not token:
                         logger.error(f'Error logging in user: token could not be created')
-                        raise HTTPException(status_code=500, detail={"message": "Error logging in user: token could not be created",
-                                                                 "status_code": 500})
+                        raise HTTPException(status_code=400, detail={"message": "Error logging in user: token could not be created",
+                                                                 "status_code": 400})
                     logger.info(f'User logged in successfully')
                     return {
                         "detail": {
@@ -175,8 +175,8 @@ class UserService:
                         for user_saved in user_witdout_id:
                             if user['email'] == user_saved['email']:
                                 logger.error(f'Error updating user: email already exists')
-                                raise HTTPException(status_code=422, detail={"message": "Error updating user: email already exists",
-                                                                    "status_code": 422})
+                                raise HTTPException(status_code=409, detail={"message": "Error updating user: email already exists",
+                                                                    "status_code": 409})
                     
                     logger.info(f'User exists: {id}')
                     user['password'] = user_exists['password']
@@ -438,7 +438,7 @@ class UserService:
         
             if code_verification_wiht_id['code_verification'] != code.code:
                 logger.error(f"Error verifying code: Incorrect code")
-                raise HTTPException(status_code=400, detail={"message": "Incorrect code", "status_code": 400})  
+                raise HTTPException(status_code=403, detail={"message": "Incorrect code", "status_code": 403})  
             
             if code_verification_wiht_id['expiration_at'] < datetime.now():
                 logger.error(f"Error verifying code: Code expired")
@@ -484,7 +484,7 @@ class UserService:
             
             if not code_exists['used']:
                 logger.error(f"Error updating password: code not verified")
-                raise HTTPException(status_code=403, detail={"message": "code not verified", "status_code": 403})
+                raise HTTPException(status_code=400, detail={"message": "code not verified", "status_code": 400})
             
             user_data["new_password"] = await self.password_adapter.hash_password(user_data["new_password"])
 
@@ -603,11 +603,11 @@ class UserService:
                 }
             elif len(feedbacks) == 0:
                 logger.error(f'Error getting feedbacks: feedbacks not found')
-                raise HTTPException(status_code=200, detail={"message": "There are no saved feedbacks",
-                                                             "status_code": 200})
+                raise HTTPException(status_code=404, detail={"message": "There are no saved feedbacks",
+                                                             "status_code": 404})
             else:
                 logger.error(f'Error getting feedbacks: feedbacks not found')
-                raise HTTPException(status_code=404, detail={"message": "Error getting feedbacks: feedbacks not found",
-                                                             "status_code": 404})
+                raise HTTPException(status_code=500, detail={"message": "Error getting feedbacks: feedbacks not found",
+                                                             "status_code": 500})
         except HTTPException as http_exc:
             raise http_exc
