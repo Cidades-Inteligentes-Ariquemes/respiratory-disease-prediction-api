@@ -1,13 +1,57 @@
-version: '3.8'
-
 services:
-  app:
-    build:
-      context: .
+  xpredictapi:
+    build: .
     container_name: XPredictApi
+    pull_policy: build
+    env_file: .env
+    restart: always
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.xpredictapi.service=xpredictapi"
+    - "traefik.http.routers.xpredictapi.rule=Host(`xpredictapi.nexuslearn.com.br`)"
+    - "traefik.http.services.xpredictapi.loadbalancer.server.port=3000"
+    - "traefik.http.routers.xpredictapi.tls=true"
+    - "traefik.http.routers.xpredictapi.tls.certresolver=letsencrypt"
+    networks:
+      - traefiknet
+
+  reverse-proxy:
+    image: traefik:v3.0
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker"
+      - "--providers.docker.exposedByDefault=false"
+      - "--providers.docker.watch"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Enable ACME (Let's Encrypt): automatic SSL.
+      - "--certificatesresolvers.letsencrypt.acme.email=contato@nexuslearn.com.br"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      # Global redirect to https
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+    labels:
+      - "traefik.http.routers.xpredictapi.rule=Host(`xpredictapi.nexuslearn.com.br:5000`)"      
+    restart: always
     ports:
-      - "8000:8000"  
-    env_file:
-      - .env  
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+      - "443:443"
     volumes:
-      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./letsencrypt/acme.json:/etc/traefik/acme/acme.json
+    networks:
+      - traefiknet
+
+volumes:
+  xpredict:
+    driver: nfsvol
+
+networks:
+  traefiknet:
+    external: true
