@@ -19,6 +19,7 @@ services:
     image: traefik:v3.0
     command:
       - "--log.level=DEBUG"
+      - "--api.dashboard=true"
       - "--api.insecure=true"
       - "--providers.docker"
       - "--providers.docker.exposedByDefault=false"
@@ -49,7 +50,7 @@ services:
       - traefiknet
 
 volumes:
-  xpredict:
+  xpredictapi:
     driver: nfsvol
 
 networks:
