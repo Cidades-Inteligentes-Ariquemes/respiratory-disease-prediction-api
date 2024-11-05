@@ -1,10 +1,13 @@
 from typing import List, Dict
 import psycopg2
+import pymssql
+from config.settings import Settings
 from infra.database import get_database
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+settings = Settings()
 
 class UserRepository:
 
@@ -67,6 +70,47 @@ class UserRepository:
             except Exception as e:
                 logger.error(f'Error getting user by email: {e}')
                 return None
+
+    async def get_user_pronto_by_username_with_fullname(self, username: str) -> Dict:
+        try:
+            connection = pymssql.connect(
+                server=settings.server,
+                port=settings.port,
+                user=settings.user_pronto,
+                password=settings.password,
+                database=settings.database,
+            )
+
+            cursor = connection.cursor()
+            cursor.execute("""
+                SELECT 
+                    Login.LoginCodigo, 
+                    Login.LoginSenha, 
+                    Login.LoginOUsuario, 
+                    Usuario.UsuarioNome
+                FROM Login
+                JOIN Usuario ON Login.LoginOUsuario = Usuario.UsuarioId
+                WHERE Login.LoginCodigo = %s
+            """, (username,))
+
+            user = cursor.fetchone()
+            cursor.close()
+            connection.close()
+
+            if user:
+                print(f'User by Pronto in repository: {user}') 
+                return {
+                    "username": user[0],
+                    "password_pronto": user[1],
+                    "userid": user[2],
+                    "fullname": user[3]
+                }
+
+        except Exception as e:
+            logger.error(f'Error getting user by Pronto with fullname by username: {e}')
+            return None
+
+    
     
 
     async def get_user_by_id(self, id: str) -> Dict:

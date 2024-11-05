@@ -11,6 +11,7 @@ from utils.send_email import send_email
 from datetime import timedelta
 import uuid
 from utils.logger import get_logger
+import hashlib
 
 logger = get_logger(__name__)
 
@@ -109,6 +110,42 @@ class UserService:
                 logger.error(f'Error logging in user: user not found')
                 raise HTTPException(status_code=404, detail={"message": "Error logging in user: user not found",
                                                              "status_code": 404})
+        except HTTPException as http_exc:
+            raise http_exc
+    
+
+    async def login_user_pronto(self, user):
+        try:
+            user = user.dict()
+            user_exists = await self.user_repository.get_user_pronto_by_username_with_fullname(user['username'])
+            if not user_exists:
+                logger.error(f'Error logging in user: user not found')
+                raise HTTPException(status_code=404, detail={"message": "Error logging in user: user not found",
+                                                             "status_code": 404})
+            logger.info(f"User exists: {user_exists['username']}")
+            password = hashlib.md5(user['password'].encode()).hexdigest().upper()
+            
+            if password != user_exists['password_pronto']:
+                logger.error(f'Error logging in user: password is incorrect')
+                raise HTTPException(status_code=401, detail={"message": "Error logging in user: password is incorrect",
+                                                             "status_code": 401})
+            
+            token = await self.token_adapter.create_token_pronto(str(user_exists['userid']), user_exists['fullname'], 'Usuario_comum')
+
+            if not token:
+                logger.error(f'Error logging in user: token could not be created')
+                raise HTTPException(status_code=400, detail={"message": "Error logging in user: token could not be created",
+                                                             "status_code": 400})
+            logger.info(f'User logged in successfully')
+            return {
+                "detail": {
+                    "message": "User logged in successfully by Pronto",
+                    'user_id': str(user_exists['userid']),
+                    'full_name': str(user_exists['fullname']),
+                    "token": token,
+                    "status_code": 200
+                }
+            }
         except HTTPException as http_exc:
             raise http_exc
         

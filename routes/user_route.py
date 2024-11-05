@@ -9,6 +9,7 @@ from interfaces.update_password_user_common import UpdatePasswordUserCommon
 from interfaces.forgot_update_password_model import ForgotUpadatePassword
 from interfaces.code_verification_model import CodeVerification
 from interfaces.id_verification_model import IdVerification
+from interfaces.user_pronto import UserLoginPronto
 from utils.examples_routes_returns import ResponseExamples
 
 
@@ -27,6 +28,9 @@ async def create_user(request: Request, user: CreateUser):
 async def login_user(request: Request, user: UserLogin):
     return await user_controller.login_user(request, user)
 
+@router.post("/login-pronto")
+async def login_user_pronto(request: Request, user: UserLoginPronto):
+    return await user_controller.login_user_pronto(request, user)
 
 @router.get("/user/{id}", responses = response_examples.get_user_by_id())
 async def get_user_by_id(request: Request, id: str):

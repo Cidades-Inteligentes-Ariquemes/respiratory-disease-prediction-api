@@ -14,6 +14,7 @@ class CredentialsMiddleware:
         token_value = request.headers.get('Authorization')
         allowed_paths = [
             '/login',
+            '/login-pronto',
             '/send-verification-code/',
             '/confirm-code-verification/',
             '/forgot/update-password/',

@@ -8,7 +8,8 @@ from interfaces.create_feedback_user import CreateFeedbackUser
 from interfaces.update_password_user_common import UpdatePasswordUserCommon
 from interfaces.forgot_update_password_model import ForgotUpadatePassword
 from interfaces.code_verification_model import CodeVerification
-from interfaces.id_verification_model import IdVerification  
+from interfaces.id_verification_model import IdVerification
+from interfaces.user_pronto import UserLoginPronto  
 from utils import credentials_middleware
 
 
@@ -24,6 +25,10 @@ class UserController:
     async def login_user(self, request: Request, user: UserLogin):
         await self.credentials_middleware.verify_credentials(request)
         return await self.user_service.login_user(user)
+    
+    async def login_user_pronto(self, request: Request, user: UserLoginPronto):
+        await self.credentials_middleware.verify_credentials(request)
+        return await self.user_service.login_user_pronto(user)
     
     async def get_user_by_id(self, request: Request, id: str):
         await self.credentials_middleware.verify_credentials(request)

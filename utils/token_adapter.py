@@ -20,6 +20,16 @@ class TokenAdapter:
             "exp": experiment_time
         }
         return jwt.encode(payload, self.secret_key, algorithm='HS256')
+    
+    async def create_token_pronto(self, user_id, full_name, profile):
+        experiment_time = datetime.datetime.utcnow() + datetime.timedelta(minutes=self.token_expiration_minutes)
+        payload = {
+            "user_id": user_id,
+            "full_name": full_name,
+            "profile": profile,
+            "exp": experiment_time
+        }
+        return jwt.encode(payload, self.secret_key, algorithm='HS256')
 
     async def decode_token(self, token):
         return jwt.decode(token, self.secret_key, algorithms='HS256')
