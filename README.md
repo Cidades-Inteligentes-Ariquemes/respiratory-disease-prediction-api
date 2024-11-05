@@ -91,7 +91,6 @@ A API estará disponível em `http://localhost:8000`.
 ### Documentação Interativa
 A documentação da API, com todos os endpoints e exemplos, está disponível em:
 - [Swagger UI](http://localhost:8000/docs)
-- [Redoc](http://localhost:8000/redoc)
 
 ### Exemplos de Endpoints
 
