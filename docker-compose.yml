@@ -8,7 +8,7 @@ services:
     labels:
     - "traefik.enable=true"
     - "traefik.http.routers.xpredictapi.service=xpredictapi"
-    - "traefik.http.routers.xpredictapi.rule=Host(`xpredictapi.nexuslearn.com.br`)"
+    - "traefik.http.routers.xpredictapi.rule=Host(`api-xpredict.murilofuza.com.br`)"
     - "traefik.http.services.xpredictapi.loadbalancer.server.port=8000"
     - "traefik.http.routers.xpredictapi.tls=true"
     - "traefik.http.routers.xpredictapi.tls.certresolver=letsencrypt"
@@ -35,7 +35,7 @@ services:
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
       - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
     labels:
-      - "traefik.http.routers.xpredictapi.rule=Host(`xpredictapi.nexuslearn.com.br:8000`)"      
+      - "traefik.http.routers.xpredictapi.rule=Host(`api-xpredict.murilofuza.com.br:8000`)"      
     restart: always
     ports:
       # The HTTP port
