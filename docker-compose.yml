@@ -3,7 +3,6 @@ services:
     build: .
     container_name: XPredictApi
     pull_policy: build
-    env_file: .env
     restart: always
     labels:
     - "traefik.enable=true"
