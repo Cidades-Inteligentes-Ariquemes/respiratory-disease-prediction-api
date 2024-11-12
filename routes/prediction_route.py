@@ -12,4 +12,4 @@ async def predict(file: UploadFile = File(...)):
 
 @router.post("/detect")
 async def detect_breast_cancer(file: UploadFile = File(...)):
-    return await prediction_controller.handle_detect_breast_cancer(file)
+    return await prediction_controller.handle_detect_breast_cancer_with_fastRCNN(file)

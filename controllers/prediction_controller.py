@@ -23,3 +23,15 @@ async def handle_detect_breast_cancer(file: UploadFile):
         "detections": result["detections"],
         "image": image_base64
     })
+
+async def handle_detect_breast_cancer_with_fastRCNN(file: UploadFile):
+    image_data = await file.read()
+    
+    result = prediction_service.detect_breast_cancer_with_fastRCNN(image_data)
+    
+    image_base64 = base64.b64encode(result["image"]).decode('utf-8')
+    
+    return JSONResponse(content={
+        "detections": result["detections"],
+        "image": image_base64
+    })
