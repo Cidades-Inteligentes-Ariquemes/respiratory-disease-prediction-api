@@ -99,10 +99,27 @@ def detect_breast_cancer(image_data: bytes):
 def detect_breast_cancer_with_fastRCNN(image_data: bytes):
     try:
         image = Image.open(io.BytesIO(image_data)).convert('RGB')
+        
+        # Normaliza o tamanho da imagem
+        max_dimension = 1024  # Dimensão máxima permitida
+        width, height = image.size
+        
+        # Calcula a nova dimensão mantendo a proporção
+        if width > max_dimension or height > max_dimension:
+            if width > height:
+                new_width = max_dimension
+                new_height = int((height * max_dimension) / width)
+            else:
+                new_height = max_dimension
+                new_width = int((width * max_dimension) / height)
+            
+            # Redimensiona a imagem mantendo a qualidade
+            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
         image_np = np.array(image)
 
         if image_np.size == 0:
-            raise HTTPException(status_code=400, detail="The image is empty or cannot be processed.")
+            raise HTTPException(status_code=400, detail="A imagem está vazia ou não pode ser processada.")
 
         # Prepara a imagem para o modelo
         transform = ToTensor()
@@ -142,47 +159,84 @@ def detect_breast_cancer_with_fastRCNN(image_data: bytes):
             image_with_boxes = image.copy()
             draw = ImageDraw.Draw(image_with_boxes)
 
-            try:
-                font = ImageFont.truetype("arial.ttf", size=15)
-            except IOError:
-                font = ImageFont.load_default()
-
             labels_map = {1: 'Mass'}
+
+            # Calcula dimensões mínimas garantidas para visualização
+            image_width, image_height = image.size
+            min_line_width = max(3, int(min(image_width, image_height) * 0.005))
+            min_font_size = max(16, int(min(image_width, image_height) * 0.02))
 
             for box, label, score in zip(boxes, labels, scores):
                 xmin, ymin, xmax, ymax = box
                 xmin, ymin, xmax, ymax = int(xmin), int(ymin), int(xmax), int(ymax)
 
-                # Desenha o retângulo da caixa
-                draw.rectangle([(xmin, ymin), (xmax, ymax)], outline='blue', width=2)
+                # Calcula a largura e altura da caixa delimitadora
+                box_width = xmax - xmin
+                box_height = ymax - ymin
 
-                # Obtem o nome da classe
+                # Define espessura da linha proporcional à imagem, com mínimo garantido
+                line_width = max(min_line_width, int(min(box_width, box_height) * 0.02))
+
+                # Define tamanho da fonte proporcional à imagem, com mínimo garantido
+                font_size = max(min_font_size, int(min(box_width, box_height) * 0.1))
+
+                try:
+                    font = ImageFont.truetype("arial.ttf", size=font_size)
+                except IOError:
+                    # Se arial.ttf não estiver disponível, tenta DejaVuSans
+                    try:
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", size=font_size)
+                    except IOError:
+                        font = ImageFont.load_default()
+
+                # Desenha a caixa delimitadora com borda dupla para maior destaque
+                # Borda externa preta
+                draw.rectangle([(xmin-line_width, ymin-line_width), 
+                              (xmax+line_width, ymax+line_width)], 
+                              outline='black', width=line_width+2)
+                # Borda interna colorida
+                draw.rectangle([(xmin, ymin), (xmax, ymax)], 
+                             outline='red', width=line_width)
+
+                # Obtém o nome da classe
                 class_name = labels_map.get(label, 'desconhecido')
 
-                # Cria o texto com o label e o score
-                text = f"{class_name}: {score:.2f}"
+                # Cria o texto com o rótulo e a pontuação
+                text = f"{score:.2f}"
 
                 # Calcula a posição e o tamanho do texto
                 text_size = draw.textbbox((0, 0), text, font=font)
                 text_width = text_size[2] - text_size[0]
                 text_height = text_size[3] - text_size[1]
 
-                # Coordenadas do fundo do texto
+                # Adiciona padding ao texto para melhor legibilidade
+                padding = max(4, int(text_height * 0.2))
+
+                # Coordenadas para o fundo do texto
                 text_xmin = xmin
-                text_ymin = ymin - text_height - 5
-                text_xmax = xmin + text_width
-                text_ymax = ymin
+                text_ymin = max(0, ymin - text_height - padding * 2)  # Garante que não saia da imagem
+                text_xmax = xmin + text_width + padding * 2
+                text_ymax = text_ymin + text_height + padding * 2
 
-                # Garantir que o texto não saia da imagem
+                # Se o texto ficaria fora da imagem no topo, coloca abaixo da caixa
                 if text_ymin < 0:
-                    text_ymin = ymin
-                    text_ymax = ymin + text_height + 5
+                    text_ymin = min(ymax, image_height - text_height - padding * 2)
+                    text_ymax = text_ymin + text_height + padding * 2
 
-                # Desenha o retângulo de fundo
-                draw.rectangle([(text_xmin, text_ymin), (text_xmax, text_ymax)], fill='blue')
+                # Desenha um contorno preto ao redor do fundo do texto
+                draw.rectangle([(text_xmin-2, text_ymin-2), (text_xmax+2, text_ymax+2)], 
+                             fill='red')
+                # Desenha o retângulo de fundo para o texto
+                draw.rectangle([(text_xmin, text_ymin), (text_xmax, text_ymax)], 
+                             fill='red')
 
-                # Escreve o texto sobre o fundo
-                draw.text((text_xmin, text_ymin), text, fill='white', font=font)
+                # Escreve o texto com contorno preto para maior contraste
+                for offset in [(1,1), (-1,-1), (1,-1), (-1,1)]:
+                    draw.text((text_xmin + padding + offset[0], text_ymin + padding + offset[1]),
+                            text, fill='black', font=font)
+                # Texto principal em branco
+                draw.text((text_xmin + padding, text_ymin + padding),
+                         text, fill='white', font=font)
 
                 # Adiciona a detecção à lista
                 detections.append({
@@ -198,9 +252,9 @@ def detect_breast_cancer_with_fastRCNN(image_data: bytes):
             annotated_image = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
 
         # Codifica a imagem em bytes
-        success, img_encoded = cv2.imencode('.jpg', annotated_image)
+        success, img_encoded = cv2.imencode('.jpg', annotated_image, [cv2.IMWRITE_JPEG_QUALITY, 95])
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to encode image.")
+            raise HTTPException(status_code=500, detail="Falha ao codificar a imagem.")
         img_bytes = img_encoded.tobytes()
 
         return {
@@ -211,12 +265,17 @@ def detect_breast_cancer_with_fastRCNN(image_data: bytes):
     except UnidentifiedImageError:
         raise HTTPException(
             status_code=400,
-            detail="Error processing image. Check if the format is correct and try again.."
+            detail="Erro ao processer a imagem. Verifique se o formato está correto e tente novamente."
         )
     except HTTPException as http_exc:
         raise http_exc
     except Exception as exc:
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while processing the image. Please try again later.."
+            detail="Ocorreu um erro ao processar a imagem. Por favor, tente novamente mais tarde."
             ) from exc
+
+
+
+
+
